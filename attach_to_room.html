@@ -1,0 +1,45 @@
+<html>
+  <head>
+    <title>Songuess extension</title>
+    <style>
+      body {
+        min-width: 357px;
+        overflow-x: hidden;
+      }
+    </style>
+
+    <script src="jquery-3.4.1.min.js"></script>
+    <script src="messages.js"></script>
+    <script src="attach_to_room.js"></script>
+  </head>
+
+  <body>
+    <div id='attach_ui'>
+      <table style="font-size:12px" width="100%">
+        <tr>
+          <td width="20%">Room name</td>
+          <td>
+            <input id="room_name" type="text" style="width:100%" tabindex="1"/>
+          </td>
+        </tr>
+        <tr height="30px">
+          <td width="20%">
+            <button id='attach_button' style="width:100%" tabindex="2">
+              Attach
+            </button>
+          </td>
+          <td>
+            <img id='spinner' src='ajax_loader.gif' align="right" style="display:none"/>
+            <div id='statusMessage' align="right" style="display:none;"></div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div id='detach_ui'>
+      <button id='detach_button'>
+        Detach
+      </button>
+    </div>
+  </body>
+</html>
+

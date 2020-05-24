@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+
+  "name": "Songuess extension",
+  "description": "Streams a Songuess game from a Google Play Music tab",
+  "version": "1.0.0",
+
+  "permissions": [
+    "activeTab",
+    "storage",
+    "declarativeContent",
+    "tabCapture"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": ["https://play.google.com/music/*"],
+      "all_frames": true,
+      "js": ["messages.js", "content_script.js"]
+    }
+  ],
+
+  "page_action": {
+    "default_popup": "attach_to_room.html"
+  },
+
+  "background": {
+    "scripts": ["messages.js", "background.js"],
+    "persistent": true
+  }
+}
+
