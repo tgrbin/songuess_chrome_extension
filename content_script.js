@@ -7,7 +7,7 @@ const Selectors = {
 };
 
 // Some click actions wait this long after executing.
-const AFTER_CLICK_DELAY_MS = 2000;
+const AFTER_CLICK_DELAY_MS = 2500;
 const SONG_PROGRESS_POLL_RATE = 400;
 
 let songProgressInterval = null;
