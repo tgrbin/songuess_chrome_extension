@@ -105,7 +105,9 @@ function sleep(ms) {
 async function clickNextAndSendTitle() {
   const oldTitle = getCurrentTitle();
 
-  clickSelector(Selectors.nextButton, messages.type.moveToNextSong);
+  if (!clickSelector(Selectors.nextButton, messages.type.moveToNextSong)) {
+    return;
+  }
 
   for (let i = 0; i < 20; ++i) {
     await sleep(NEXT_STATE_POLL_RATE);
@@ -119,10 +121,16 @@ async function clickNextAndSendTitle() {
 }
 
 async function initialStartPlaylist() {
+  if (!clickSelector(Selectors.startPlaylistButton, messages.type.moveToNextSong)) {
+    return;
+  }
+
   for (let i = 0; i < 30; ++i) {
-    clickSelector(Selectors.playPauseButton, messages.type.moveToNextSong);
     await sleep(NEXT_STATE_POLL_RATE);
     if (getCurrentTitle() !== null && currentlyPlaying()) {
+      if (!clickSelector(Selectors.playPauseButton, messages.type.moveToNextSong)) {
+        return;
+      }
       setTimeout(sendTitle, AFTER_PAUSE_DELAY);
       return;
     }
@@ -140,7 +148,9 @@ async function startPlaying() {
   }
 
   for (let i = 0; i < 20; ++i) {
-    clickSelector(Selectors.playPauseButton, messages.type.startPlaying);
+    if (!clickSelector(Selectors.playPauseButton, messages.type.startPlaying)) {
+      return false;
+    }
     await sleep(NEXT_STATE_POLL_RATE);
     if (currentlyPlaying()) {
       chrome.runtime.sendMessage(messages.newMessage(messages.type.startPlaying));
