@@ -44,6 +44,8 @@ const messages = {
     selectorNotFound: 'SELECTOR_NOT_FOUND',
     titleNotFound: 'TITLE_NOT_FOUND',
     serverError: 'SERVER_ERROR',
-    socketError: 'SOCKET_ERROR'
+    socketError: 'SOCKET_ERROR',
+    failedToMoveToNextSong: 'FAILED_TO_NEXT',
+    faliedToStartPlaying: 'FAILED_TO_PLAY'
   }
 };

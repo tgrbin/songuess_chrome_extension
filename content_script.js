@@ -6,8 +6,14 @@ const Selectors = {
   sliderBar: '#sliderBar'
 };
 
-// Some click actions wait this long after executing.
-const AFTER_CLICK_DELAY_MS = 2500;
+// Clicking the pause button seems like a simple operation, so we just click
+// and wait for a short time.
+const AFTER_PAUSE_DELAY = 100;
+// After initiating some actions, we poll the page state to make sure we end
+// up in the expected state. For example, after clicking next we poll to make
+// sure the title is not the same as it was.
+const NEXT_STATE_POLL_RATE = 100;
+// Poll rate for the song progress slider, used to detect that the song ended.
 const SONG_PROGRESS_POLL_RATE = 400;
 
 let songProgressInterval = null;
@@ -92,6 +98,60 @@ function sendError(messageType, error) {
   chrome.runtime.sendMessage(messages.newError(messageType, error));
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function clickNextAndSendTitle() {
+  const oldTitle = getCurrentTitle();
+
+  clickSelector(Selectors.nextButton, messages.type.moveToNextSong);
+
+  for (let i = 0; i < 20; ++i) {
+    await sleep(NEXT_STATE_POLL_RATE);
+    if (getCurrentTitle() !== oldTitle) {
+      sendTitle();
+      return;
+    }
+  }
+
+  sendError(messages.type.moveToNextSong, messages.status.failedToMoveToNextSong);
+}
+
+async function initialStartPlaylist() {
+  for (let i = 0; i < 30; ++i) {
+    clickSelector(Selectors.playPauseButton, messages.type.moveToNextSong);
+    await sleep(NEXT_STATE_POLL_RATE);
+    if (getCurrentTitle() !== null && currentlyPlaying()) {
+      setTimeout(sendTitle, AFTER_PAUSE_DELAY);
+      return;
+    }
+  }
+
+  sendError(messages.type.moveToNextSong, messages.status.failedToMoveToNextSong);
+}
+
+async function startPlaying() {
+  if (currentlyPlaying()) {
+    // startPlaying should only be called after moveToNext, so the song should
+    // currently be paused.
+    console.log('SHOULD NEVER HAPPEN');
+    return true;
+  }
+
+  for (let i = 0; i < 20; ++i) {
+    clickSelector(Selectors.playPauseButton, messages.type.startPlaying);
+    await sleep(NEXT_STATE_POLL_RATE);
+    if (currentlyPlaying()) {
+      chrome.runtime.sendMessage(messages.newMessage(messages.type.startPlaying));
+      return true;
+    }
+  }
+
+  sendError(messages.type.startPlaying, messages.status.failedToStartPlaying);
+  return false;
+}
+
 chrome.runtime.onMessage.addListener(function(message) {
   console.log('got message: ', message);
 
@@ -104,39 +164,22 @@ chrome.runtime.onMessage.addListener(function(message) {
     }
 
     if (playBarReady()) {
-      const clickNextAndSendTitle = function() {
-        clickSelector(Selectors.nextButton, messageType);
-        setTimeout(function() {
-          sendTitle();
-        }, AFTER_CLICK_DELAY_MS);
-      };
-
       if (currentlyPlaying()) {
         clickSelector(Selectors.playPauseButton, messageType);
-        setTimeout(clickNextAndSendTitle, AFTER_CLICK_DELAY_MS);
+        setTimeout(clickNextAndSendTitle, AFTER_PAUSE_DELAY);
       } else {
         clickNextAndSendTitle();
       }
     } else {
-      clickSelector(Selectors.startPlaylistButton, messageType);
-      setTimeout(function() {
-        clickSelector(Selectors.playPauseButton, messageType);
-        setTimeout(function() {
-          clickSelector(Selectors.nextButton, messageType);
-          setTimeout(function() {
-            sendTitle();
-          }, AFTER_CLICK_DELAY_MS);
-        }, AFTER_CLICK_DELAY_MS);
-      }, AFTER_CLICK_DELAY_MS);
+      initialStartPlaylist();
     }
   } else if (messageType == messages.type.startPlaying) {
     // This assumes moveToNextSong was called beforehand.
     // It makes sense, because you can't know the title that's about to play
     // unless you previously called moveToNextSong.
-    if (clickSelector(Selectors.playPauseButton, messageType)) {
-      chrome.runtime.sendMessage(messages.newMessage(messageType));
+    if (startPlaying()) {
+      songProgressInterval = setInterval(checkSongProgress, SONG_PROGRESS_POLL_RATE);
     }
-    songProgressInterval = setInterval(checkSongProgress, SONG_PROGRESS_POLL_RATE);
   } else if (messageType == messages.type.detachRoom) {
     console.log('got detach room message');
     stopPlaying();
