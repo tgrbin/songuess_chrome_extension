@@ -1,5 +1,5 @@
-//const WS_URL = 'ws://localhost:8080';
-const WS_URL = 'wss://songuess.live/ws/';
+const WS_URL = 'ws://localhost:8080';
+//const WS_URL = 'wss://songuess.live/ws/';
 const CHUNK_SIZE_MS = 5000;
 
 let webSocket = null;
@@ -39,6 +39,10 @@ function initSocket() {
 
   webSocket.onclose = function (event) {
     console.log('socket closed by the server');
+    if (attachedInfo !== null) {
+      sendToAttachedTab(messages.newMessage(messages.type.detachRoom));
+      stopStreaming();
+    }
     webSocket = null;
   }
 }
