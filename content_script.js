@@ -109,7 +109,7 @@ async function clickNextAndSendTitle() {
     return;
   }
 
-  for (let i = 0; i < 20; ++i) {
+  for (let i = 0; i < 30; ++i) {
     await sleep(NEXT_STATE_POLL_RATE);
     if (getCurrentTitle() !== oldTitle) {
       sendTitle();
@@ -147,7 +147,7 @@ async function startPlaying() {
     return true;
   }
 
-  for (let i = 0; i < 20; ++i) {
+  for (let i = 0; i < 30; ++i) {
     if (!clickSelector(Selectors.playPauseButton, messages.type.startPlaying)) {
       return false;
     }
