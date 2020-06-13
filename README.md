@@ -23,11 +23,15 @@ Go to your streaming service web page and create a playlist you want to host a g
 
 ## Start the game
 
-The game is started by "attaching" to the created server room. From the streaming service page, click on the extension icon (upper right, could be hidden), type the room name and click "Attach".
+The game is started by "attaching" the extension to the created server room.
+
+For Google Play Music, you probably want your playlist to shuffle, so click "Shuffle" (and then pause) before attaching, or have the shuffle icon enabled before attaching.
 
 It will refuse to attach if the room is currently empty, so make sure to open it (songuess.live/#YOUR_NAME_HERE) in another tab first.
 
-For Google Play Music, you probably want your playlist to shuffle, so click "Shuffle" (and then pause) before attaching, or have the shuffle icon enabled before attaching.
+From the streaming service page tab, click on the extension icon (SG icon, upper right, could be hidden), type the room name and click "Attach".
+
+The music should start coming from the songuess tab! Refrain from touching the streaming service page, as it may conflict with what the extension is doing.
 
 ## Have fun playing! :)
 
