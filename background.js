@@ -177,3 +177,13 @@ chrome.runtime.onInstalled.addListener(function() {
     }]);
   });
 });
+
+chrome.tabs.onRemoved.addListener(function(tabid, removed) {
+  if (attachedInfo !== null && attachedInfo.tabId === tabid) {
+    stopStreaming();
+    if (webSocket !== null) {
+      webSocket.close();
+      webSocket = null;
+    }
+  }
+});
