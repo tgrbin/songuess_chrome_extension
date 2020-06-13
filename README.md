@@ -13,9 +13,7 @@ The only currently supported streaming service is Google Play Music, but we can 
 
 ## Create a room
 
-Pick a name for your room, and then go to https://songuess.live/#YOUR_NAME_HERE and create a room.
-
-If the room exists (i.e. the create room interface doesn't appear), just pick another name.
+Go to https://songuess.live/#newRoom and create a room.
 
 ## Create a playlist
 
@@ -25,7 +23,7 @@ Go to your streaming service web page in another tab and create a playlist you w
 
 The game is started by "attaching" the extension to the created server room.
 
-For Google Play Music, you probably want your playlist to shuffle, so click "Shuffle" (and then pause) before attaching, or have the shuffle icon enabled before attaching.
+For Google Play Music, you probably want your playlist to shuffle, so click "Shuffle" (and then pause) or have the shuffle icon enabled before attaching.
 
 From the streaming service page tab, click on the extension icon (SG icon, upper right, could be hidden), type the room name and click "Attach".
 
