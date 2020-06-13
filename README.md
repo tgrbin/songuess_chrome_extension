@@ -6,7 +6,7 @@ The only currently supported streaming service is Google Play Music, but we can 
 
 ## Installing
 
-1. Download (or clone) this repository
+1. [Download](https://github.com/tgrbin/songuess_chrome_extension/archive/master.zip) (or clone) this repository
 2. Go to chrome://extensions, enable "Developer mode"
 3. Click "Load unpacked" and choose the extension folder
 
