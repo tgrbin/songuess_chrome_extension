@@ -15,8 +15,6 @@ const Selectors = {
   sliderBar: ".Root__top-container .playback-bar .progress-bar__bg"
 };
 
-const NEXT_STATE_POLL_RATE = 200;
-const NEXT_STATE_MAX_ITERATIONS = 20;
 // Poll rate for the song progress slider, used to detect that the song ended.
 const SONG_PROGRESS_POLL_RATE = 400;
 
