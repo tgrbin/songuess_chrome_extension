@@ -16,7 +16,12 @@
     {
       "matches": ["https://play.google.com/music/*"],
       "all_frames": true,
-      "js": ["messages.js", "content_script.js"]
+      "js": ["messages.js", "google_play_music.js"]
+    },
+    {
+      "matches": ["https://open.spotify.com/playlist/*"],
+      "all_frames": true,
+      "js": ["messages.js", "spotify.js"]
     }
   ],
 

@@ -1,3 +1,7 @@
+/*
+ * This is a content script for hosting a game from Google Play Music.
+ */
+
 const Selectors = {
   startPlaylistButton: '#playButton',
   playPauseButton: '#player-bar-play-pause',
@@ -13,6 +17,8 @@ const AFTER_PAUSE_DELAY = 100;
 // up in the expected state. For example, after clicking next we poll to make
 // sure the title is not the same as it was.
 const NEXT_STATE_POLL_RATE = 100;
+// We poll this many times until giving up.
+const NEXT_STATE_MAX_ITERATIONS = 40;
 // Poll rate for the song progress slider, used to detect that the song ended.
 const SONG_PROGRESS_POLL_RATE = 400;
 
@@ -109,7 +115,7 @@ async function clickNextAndSendTitle() {
     return;
   }
 
-  for (let i = 0; i < 30; ++i) {
+  for (let i = 0; i < NEXT_STATE_MAX_ITERATIONS; ++i) {
     await sleep(NEXT_STATE_POLL_RATE);
     if (getCurrentTitle() !== oldTitle) {
       sendTitle();
@@ -125,7 +131,7 @@ async function initialStartPlaylist() {
     return;
   }
 
-  for (let i = 0; i < 30; ++i) {
+  for (let i = 0; i < NEXT_STATE_MAX_ITERATIONS; ++i) {
     await sleep(NEXT_STATE_POLL_RATE);
     if (getCurrentTitle() !== null && currentlyPlaying()) {
       if (!clickSelector(Selectors.playPauseButton, messages.type.moveToNextSong)) {
@@ -147,7 +153,7 @@ async function startPlaying() {
     return true;
   }
 
-  for (let i = 0; i < 30; ++i) {
+  for (let i = 0; i < NEXT_STATE_MAX_ITERATIONS; ++i) {
     if (!clickSelector(Selectors.playPauseButton, messages.type.startPlaying)) {
       return false;
     }

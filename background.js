@@ -1,5 +1,5 @@
-//const WS_URL = 'ws://localhost:8080';
-const WS_URL = 'wss://songuess.live/ws/';
+const WS_URL = 'ws://localhost:8080';
+//const WS_URL = 'wss://songuess.live/ws/';
 const CHUNK_SIZE_MS = 5000;
 
 let webSocket = null;
@@ -143,6 +143,12 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       attachToRoom(roomName);
     }
   } else if (messageType == messages.type.detachRoom) {
+//    chrome.tabs.query({
+//      active: true,
+//      currentWindow: true
+//    }, function(tabs) {
+//      chrome.tabs.sendMessage(tabs[0].id, messages.newMessage(messages.type.detachRoom));
+//    });
     if (attachedInfo === null) {
       console.log('unexpected state, got detach while not streaming');
     } else {
@@ -155,6 +161,13 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       }
     }
   } else if (messageType == messages.type.isAttached) {
+//    chrome.tabs.query({
+//      active: true,
+//      currentWindow: true
+//    }, function(tabs) {
+//      chrome.tabs.sendMessage(tabs[0].id, messages.newMessage(messages.type.moveToNextSong));
+//    });
+
     sendResponse(attachedInfo !== null);
   // These messages are just propagated to the web socket.
   } else if (messageType == messages.type.moveToNextSong ||
@@ -171,6 +184,9 @@ chrome.runtime.onInstalled.addListener(function() {
       conditions: [
         new chrome.declarativeContent.PageStateMatcher({
           pageUrl: { urlPrefix: 'https://play.google.com/music' }
+        }),
+        new chrome.declarativeContent.PageStateMatcher({
+          pageUrl: { urlPrefix: 'https://open.spotify.com/playlist' }
         })
       ],
       actions: [ new chrome.declarativeContent.ShowPageAction() ]
