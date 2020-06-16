@@ -143,12 +143,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       attachToRoom(roomName);
     }
   } else if (messageType == messages.type.detachRoom) {
-//    chrome.tabs.query({
-//      active: true,
-//      currentWindow: true
-//    }, function(tabs) {
-//      chrome.tabs.sendMessage(tabs[0].id, messages.newMessage(messages.type.detachRoom));
-//    });
     if (attachedInfo === null) {
       console.log('unexpected state, got detach while not streaming');
     } else {
@@ -161,13 +155,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       }
     }
   } else if (messageType == messages.type.isAttached) {
-//    chrome.tabs.query({
-//      active: true,
-//      currentWindow: true
-//    }, function(tabs) {
-//      chrome.tabs.sendMessage(tabs[0].id, messages.newMessage(messages.type.moveToNextSong));
-//    });
-
     sendResponse(attachedInfo !== null);
   // These messages are just propagated to the web socket.
   } else if (messageType == messages.type.moveToNextSong ||

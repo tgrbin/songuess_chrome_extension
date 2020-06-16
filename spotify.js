@@ -7,17 +7,15 @@ const Selectors = {
     ".Root__top-container button[data-testid='control-button-play']",
   pauseButton:
     ".Root__top-container button[data-testid='control-button-pause']",
+  prevButton: 
+    ".Root__top-container button[data-testid='control-button-skip-back']",
   nextButton: 
     ".Root__top-container button[data-testid='control-button-skip-forward']",
   currentTitle: ".Root__now-playing-bar a[data-testid='nowplaying-track-link']",
   sliderBar: ".Root__top-container .playback-bar .progress-bar__bg"
 };
 
-// After initiating some actions, we poll the page state to make sure we end
-// up in the expected state. For example, after clicking next we poll to make
-// sure the title is not the same as it was.
 const NEXT_STATE_POLL_RATE = 200;
-// We poll this many times until giving up.
 const NEXT_STATE_MAX_ITERATIONS = 20;
 // Poll rate for the song progress slider, used to detect that the song ended.
 const SONG_PROGRESS_POLL_RATE = 400;
@@ -85,7 +83,7 @@ function checkSongProgress() {
   // poll rate is 400ms.
   // On the other end, 3min songs will be cut off by ~2secs because of this.
   // I'm fine with that, song ends are never reached in practice.
-  // TODO test that this works for short songs, maybe it will linger on 100
+  // TODO: Test that this works for short songs, maybe it will linger on 100
   // enough for us to pick up the change.
   if (getCurrentSongProgress() > 99) {
     console.log('song done');
@@ -107,11 +105,10 @@ function clickSelector(selector, messageType) {
   }
 }
 
-function sendTitle() {
+function sendTitle(title) {
   // Message type we're sending from here is always moveToNextSong.
   // That's the message that triggered searching for a title, and
   // when the search is done we send the same type of message back.
-  const title = getCurrentTitle();
   if (title !== null) {
     chrome.runtime.sendMessage(messages.newMessage(
       messages.type.moveToNextSong,
@@ -132,51 +129,96 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function checkIfTheBarMoved(s) {
+  // It works by collecting values from the progress bar, returning true
+  // as soon as 4 different values are present.
+  // Sometimes the bar returns the same value twice, sometimes it changes a bit
+  // right after you press "next", and then starts changing for real later.
+  // So 4 was a good value to wait for.
+  s.add(getCurrentSongProgress());
+  if (s.size > 3) {
+    return true;
+  }
+  return false;
+}
+
 async function clickNextAndSendTitle() {
-  let i;
+  console.log('clicking next and waiting for bar to move');
+
+  // State here is that some song is either playing or paused.
+  // We start by hitting next, which will move to the next one AND
+  // start playing it right away.
+  let i, j, s;
   for (i = 0; i < 2; ++i) {
     if (!clickSelector(Selectors.nextButton, messages.type.moveToNextSong)) {
       return;
     }
-
-    let s = new Set();
-    let j;
+    s = new Set();
     for (j = 0; j < 50; ++j) {
-      s.add(getCurrentSongProgress());
-      await sleep(50);
-      console.log(s.size);
-      if (s.size > 3) {
+      if (checkIfTheBarMoved(s)) {
         break;
       }
+      await sleep(50);
     }
     if (j < 50) {
       break;
     }
   }
-  if (i < 2) {
-    if (!clickSelector(Selectors.pauseButton, messages.type.moveToNextSong)) {
-      return;
-    }
-  } else {
+  if (i == 2) {
     console.log('i=2');
     sendError(messages.type.moveToNextSong, messages.status.failedToMoveToNextSong);
     return;
   }
 
-  console.log(getCurrentTitle());
+  // At this point, the next song is playing.
+  // But, we can't pause it here and return, because a tiny part of audio would
+  // still be cut off.
+  // We have to position it directly at 0.
+  const nextTitle = getCurrentTitle();
+  console.log('next title:', nextTitle);
 
-  // Wait for the indicator to become paused.
-  for (i = 0; i < 20; ++i) {
-    console.log('waiting for pause:', i);
-    await sleep(100);
-    if (currentlyPaused()) break;
+  console.log('clicking prev and waiting for bar to move');
+  // So we hit "prev song" button, wait for progress to move, and then pause it.
+  if (!clickSelector(Selectors.prevButton, messages.type.moveToNextSong)) {
+    return;
   }
-  if (i == 20) {
+
+  s = new Set();
+  for (j = 0; j < 50; ++j) {
+    if (checkIfTheBarMoved(s)) {
+      break;
+    }
+    await sleep(50);
+  }
+  if (j == 50) {
+    console.log('progress bar didn\'t start moving after hitting prev');
     sendError(messages.type.moveToNextSong, messages.status.failedToMoveToNextSong);
     return;
   }
 
-  sendTitle();
+  console.log('clicking pause');
+  // We now pause the song.
+  if (!clickSelector(Selectors.pauseButton, messages.type.moveToNextSong)) {
+    return;
+  }
+
+  // And wait for the pause to take effect.
+  for (i = 0; i < 10; ++i) {
+    console.log('waiting for pause:', i);
+    await sleep(100);
+    if (currentlyPaused()) break;
+  }
+  if (i == 10) {
+    sendError(messages.type.moveToNextSong, messages.status.failedToMoveToNextSong);
+    return;
+  }
+
+  console.log('pause took effect');
+
+  // We end this function actually positioned at the CURRENTLY playing song.
+  // But we know what the next one will be, because we've 'peeked' there.
+  // The startPlaying call will hit nextButton to start the next song.
+  sendTitle(nextTitle);
 }
 
 async function startPlaying() {
@@ -187,8 +229,7 @@ async function startPlaying() {
     return false;
   }
 
-  // The playButton is always present if currentlyPaused returned true.
-  clickSelector(Selectors.playButton, messages.type.startPlaying);
+  clickSelector(Selectors.nextButton, messages.type.startPlaying);
   chrome.runtime.sendMessage(messages.newMessage(messages.type.startPlaying));
 }
 
@@ -212,7 +253,6 @@ chrome.runtime.onMessage.addListener(function(message) {
       songProgressInterval = setInterval(checkSongProgress, SONG_PROGRESS_POLL_RATE);
     }
   } else if (messageType == messages.type.detachRoom) {
-//    startPlaying();
     console.log('got detach room message');
     stopPlaying();
   }
