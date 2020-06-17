@@ -24,7 +24,7 @@
       "js": ["messages.js", "spotify.js"]
     },
     {
-      "matches": ["https://music.youtube.com/playlist*"],
+      "matches": ["https://music.youtube.com/*"],
       "all_frames": true,
       "js": ["messages.js", "youtube_music.js"]
     }

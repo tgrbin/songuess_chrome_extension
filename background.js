@@ -176,7 +176,7 @@ chrome.runtime.onInstalled.addListener(function() {
           pageUrl: { urlPrefix: 'https://open.spotify.com/playlist' }
         }),
         new chrome.declarativeContent.PageStateMatcher({
-          pageUrl: { urlPrefix: 'https://music.youtube.com/playlist' }
+          pageUrl: { urlPrefix: 'https://music.youtube.com/' }
         })
       ],
       actions: [ new chrome.declarativeContent.ShowPageAction() ]
