@@ -49,12 +49,14 @@ function getCurrentTitle() {
 }
 
 // Returns a value in milliseconds.
-function getSongTimeRemainingMs() {
-  return 10000;
-//  const el = document.querySelector(Selectors.sliderBar);
-//  const currentValue = parseInt(el.ariaValueNow);
-//  const maxValue = parseInt(el.ariaValueMax);
-//  return maxValue - currentValue;
+function getCurrentSongProgress() {
+  const el = document.querySelector(Selectors.sliderBar);
+  const transform = el.style.transform;  // Example value: 'scaleX(0.0616114)'
+  const arr = transform.match(/scaleX\((.*)\)/);
+  if (!arr || arr.length != 2) {
+    return 0;
+  }
+  return (parseFloat(arr[1]) || 0) * 100;
 }
 
 function stopPlaying() {
@@ -67,8 +69,13 @@ function stopPlaying() {
 }
 
 function checkSongProgress() {
-  // We add a bit to make sure one poll falls into the (end - poll_rate, end) interval.
-  if (getSongTimeRemainingMs() < SONG_PROGRESS_POLL_RATE + 100) {
+  // If a song lasts 30 secs, 1% of it's duration is just 300ms, whereas our 
+  // poll rate is 400ms.
+  // On the other end, 3min songs will be cut off by ~2secs because of this.
+  // I'm fine with that, song ends are never reached in practice.
+  // TODO: Test that this works for short songs, maybe it will linger on 100
+  // enough for us to pick up the change.
+  if (getCurrentSongProgress() > 99) {
     console.log('song done');
     stopPlaying();
     chrome.runtime.sendMessage(messages.newMessage(messages.type.songHasEnded));
