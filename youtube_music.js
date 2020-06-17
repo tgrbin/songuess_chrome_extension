@@ -4,6 +4,7 @@
 
 const Selectors = {
   startPlaylistButton: "paper-button[aria-label='Shuffle']",
+  startPlaylistButtonBackup: "paper-button[aria-label='PLAY ALL']",
   playPauseButton: '#play-pause-button',
   prevButton: 'paper-icon-button.previous-button',
   nextButton: 'paper-icon-button.next-button',
@@ -89,7 +90,9 @@ function clickSelector(selector, messageType) {
     el.click();
     return true;
   } else {
-    sendError(messageType, messages.status.selectorNotFound);
+    if (messageType) {
+      sendError(messageType, messages.status.selectorNotFound);
+    }
     return false;
   }
 }
@@ -168,8 +171,9 @@ async function clickNextAndSendTitle() {
 }
 
 async function initialStartPlaylist() {
-  // Click shuffle.
-  if (!clickSelector(Selectors.startPlaylistButton, messages.type.moveToNextSong)) {
+  // Click shuffle or play.
+  if (!clickSelector(Selectors.startPlaylistButton) &&
+      !clickSelector(Selectors.startPlaylistButtonBackup, messages.type.moveToNextSong)) {
     return;
   }
 
