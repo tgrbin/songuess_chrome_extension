@@ -1,5 +1,5 @@
-//const WS_URL = 'ws://localhost:8080';
-const WS_URL = 'wss://songuess.live/ws/';
+const WS_URL = 'ws://localhost:8080';
+//const WS_URL = 'wss://songuess.live/ws/';
 const CHUNK_SIZE_MS = 5000;
 
 let webSocket = null;
@@ -174,6 +174,9 @@ chrome.runtime.onInstalled.addListener(function() {
         }),
         new chrome.declarativeContent.PageStateMatcher({
           pageUrl: { urlPrefix: 'https://open.spotify.com/playlist' }
+        }),
+        new chrome.declarativeContent.PageStateMatcher({
+          pageUrl: { urlPrefix: 'https://music.youtube.com/playlist' }
         })
       ],
       actions: [ new chrome.declarativeContent.ShowPageAction() ]

@@ -22,6 +22,11 @@
       "matches": ["https://open.spotify.com/playlist/*"],
       "all_frames": true,
       "js": ["messages.js", "spotify.js"]
+    },
+    {
+      "matches": ["https://music.youtube.com/playlist*"],
+      "all_frames": true,
+      "js": ["messages.js", "youtube_music.js"]
     }
   ],
 
