@@ -2,8 +2,10 @@
 
 The extension is used for hosting Songuess games.
 
-The currently supported streaming services are Google Play Music and Spotify.
-Youtube Music is coming.
+The currently supported streaming services:
+* Google Play Music
+* Spotify
+* Youtube Music
 
 ## Installing
 
