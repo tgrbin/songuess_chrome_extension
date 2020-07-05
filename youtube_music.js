@@ -9,6 +9,7 @@ const Selectors = {
   prevButton: 'paper-icon-button.previous-button',
   nextButton: 'paper-icon-button.next-button',
   currentTitle: 'div.content-info-wrapper .title',
+  currentArtist: 'div.content-info-wrapper .byline-wrapper a:nth-child(1)',
   sliderBar: '#progress-bar #primaryProgress'
 };
 
@@ -46,6 +47,11 @@ function currentlyPlaying() {
 
 function getCurrentTitle() {
   const el = document.querySelector(Selectors.currentTitle);
+  return el? el.textContent: null;
+}
+
+function getCurrentArtist() {
+  const el = document.querySelector(Selectors.currentArtist);
   return el? el.textContent: null;
 }
 
@@ -97,15 +103,16 @@ function clickSelector(selector, messageType) {
   }
 }
 
-function sendTitle(title) {
-  console.log('sending title:', title);
+function sendCurrentItem(title, artist) {
+  console.log('sending item:', title, artist);
   // Message type we're sending from here is always moveToNextSong.
   // That's the message that triggered searching for a title, and
   // when the search is done we send the same type of message back.
   if (title !== null) {
     chrome.runtime.sendMessage(messages.newMessage(
       messages.type.moveToNextSong, {
-        title: title
+        title: title,
+        artist: artist
       })
     );
   } else {
@@ -124,6 +131,7 @@ function sleep(ms) {
 async function clickNextAndSendTitle() {
   const oldTitle = getCurrentTitle();
   let newTitle = null;
+  let newArtist = null;
 
   // Click next.
   if (!clickSelector(Selectors.nextButton, messages.type.moveToNextSong)) {
@@ -141,6 +149,7 @@ async function clickNextAndSendTitle() {
       // So we 'peek' the next song, go back, pause, and then the following
       // 'play' command from the server will actually click 'next'.
       newTitle = getCurrentTitle();
+      newArtist = getCurrentArtist();
       if (!clickSelector(Selectors.prevButton, messages.type.moveToNextSong)) {
         return;
       }
@@ -161,7 +170,7 @@ async function clickNextAndSendTitle() {
           continue;
         }
         // We're done, title is old and the song is paused.
-        sendTitle(newTitle);
+        sendCurrentItem(newTitle, newArtist);
         return;
       }
     }
