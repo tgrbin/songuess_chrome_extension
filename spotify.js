@@ -12,6 +12,7 @@ const Selectors = {
   nextButton: 
     ".Root__top-container button[data-testid='control-button-skip-forward']",
   currentTitle: ".Root__now-playing-bar a[data-testid='nowplaying-track-link']",
+  currentArtist: ".Root__now-playing-bar a[href^='/artist/']",
   sliderBar: ".Root__top-container .playback-bar .progress-bar__bg"
 };
 
@@ -54,6 +55,11 @@ function currentlyPaused() {
 
 function getCurrentTitle() {
   const el = document.querySelector(Selectors.currentTitle);
+  return el? el.textContent: null;
+}
+
+function getCurrentArtist() {
+  const el = document.querySelector(Selectors.currentArtist);
   return el? el.textContent: null;
 }
 
@@ -103,15 +109,15 @@ function clickSelector(selector, messageType) {
   }
 }
 
-function sendTitle(title) {
+function sendCurrentSong(title, artist) {
   // Message type we're sending from here is always moveToNextSong.
   // That's the message that triggered searching for a title, and
   // when the search is done we send the same type of message back.
   if (title !== null) {
     chrome.runtime.sendMessage(messages.newMessage(
-      messages.type.moveToNextSong,
-      {
-        title: title
+      messages.type.moveToNextSong, {
+        title: title,
+        artist: artist
       })
     );
   } else {
@@ -173,7 +179,9 @@ async function clickNextAndSendTitle() {
   // still be cut off.
   // We have to position it directly at 0.
   const nextTitle = getCurrentTitle();
+  const nextArtist = getCurrentArtist();
   console.log('next title:', nextTitle);
+  console.log('next artist:', nextArtist);
 
   console.log('clicking prev and waiting for bar to move');
   // So we hit "prev song" button, wait for progress to move, and then pause it.
@@ -216,7 +224,7 @@ async function clickNextAndSendTitle() {
   // We end this function actually positioned at the CURRENTLY playing song.
   // But we know what the next one will be, because we've 'peeked' there.
   // The startPlaying call will hit nextButton to start the next song.
-  sendTitle(nextTitle);
+  sendCurrentSong(nextTitle, nextArtist);
 }
 
 async function startPlaying() {
