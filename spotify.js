@@ -63,6 +63,19 @@ function getCurrentArtist() {
   return el? el.textContent: null;
 }
 
+function clickSelector(selector, messageType) {
+  console.log('trying to click selector: ', selector);
+  const el = document.querySelector(selector);
+  if (el) {
+    el.click();
+    return true;
+  } else {
+    sendError(messageType, messages.status.selectorNotFound);
+    console.log('click failed');
+    return false;
+  }
+}
+
 // Returns a value in milliseconds.
 function getCurrentSongProgress() {
   const button = document.querySelector(Selectors.sliderBar + " button");
@@ -76,6 +89,7 @@ function getCurrentSongProgress() {
 function stopPlaying() {
   if (songProgressInterval !== null) {
     clearInterval(songProgressInterval);
+    songProgressInterval = null;
   }
   if (currentlyPlaying()) {
     clickSelector(Selectors.pauseButton);
@@ -96,32 +110,16 @@ function checkSongProgress() {
   }
 }
 
-function clickSelector(selector, messageType) {
-  console.log('trying to click selector: ', selector);
-  const el = document.querySelector(selector);
-  if (el) {
-    el.click();
-    return true;
-  } else {
-    sendError(messageType, messages.status.selectorNotFound);
-    console.log('click failed');
-    return false;
-  }
-}
-
-function sendCurrentSong(title, artist) {
-  // Message type we're sending from here is always moveToNextSong.
-  // That's the message that triggered searching for a title, and
-  // when the search is done we send the same type of message back.
+function sendCurrentSong() {
+  const title = getCurrentTitle();
+  const artist = getCurrentArtist();
+  console.log('current song: ', title, ' ', artist);
   if (title !== null) {
     chrome.runtime.sendMessage(messages.newMessage(
-      messages.type.moveToNextSong, {
-        title: title,
-        artist: artist
-      })
+      messages.type.startPlaying, {title: title, artist: artist})
     );
   } else {
-    sendError(messages.type.moveToNextSong, messages.status.titleNotFound);
+    sendError(messages.type.startPlaying, messages.status.titleNotFound);
   }
 }
 
@@ -146,15 +144,14 @@ function checkIfTheBarMoved(s) {
   return false;
 }
 
-async function clickNextAndSendTitle() {
+async function clickNextAndSendCurrentSong() {
   console.log('clicking next and waiting for bar to move');
-
-  // State here is that some song is either playing or paused.
-  // We start by hitting next, which will move to the next one AND
+  // We start by clicking next, which will move to the next one AND
   // start playing it right away.
   let i, j, s;
+  // We try this twice, in case the first click didn't take.
   for (i = 0; i < 2; ++i) {
-    if (!clickSelector(Selectors.nextButton, messages.type.moveToNextSong)) {
+    if (!clickSelector(Selectors.nextButton, messages.type.startPlaying)) {
       return;
     }
     s = new Set();
@@ -170,73 +167,25 @@ async function clickNextAndSendTitle() {
   }
   if (i == 2) {
     console.log('i=2');
-    sendError(messages.type.moveToNextSong, messages.status.failedToMoveToNextSong);
+    sendError(messages.type.startPlaying, messages.status.failedToStartPlaying);
     return;
   }
 
-  // At this point, the next song is playing.
-  // But, we can't pause it here and return, because a tiny part of audio would
-  // still be cut off.
-  // We have to position it directly at 0.
-  const nextTitle = getCurrentTitle();
-  const nextArtist = getCurrentArtist();
-  console.log('next title:', nextTitle);
-  console.log('next artist:', nextArtist);
+  // At this point, the next song is playing, we get the current title/artist
+  // and send it back.
+  sendCurrentSong();
 
-  console.log('clicking prev and waiting for bar to move');
-  // So we hit "prev song" button, wait for progress to move, and then pause it.
-  if (!clickSelector(Selectors.prevButton, messages.type.moveToNextSong)) {
-    return;
-  }
-
-  s = new Set();
-  for (j = 0; j < 50; ++j) {
-    if (checkIfTheBarMoved(s)) {
-      break;
-    }
-    await sleep(50);
-  }
-  if (j == 50) {
-    console.log('progress bar didn\'t start moving after hitting prev');
-    sendError(messages.type.moveToNextSong, messages.status.failedToMoveToNextSong);
-    return;
-  }
-
-  console.log('clicking pause');
-  // We now pause the song.
-  if (!clickSelector(Selectors.pauseButton, messages.type.moveToNextSong)) {
-    return;
-  }
-
-  // And wait for the pause to take effect.
-  for (i = 0; i < 10; ++i) {
-    console.log('waiting for pause:', i);
-    await sleep(100);
-    if (currentlyPaused()) break;
-  }
-  if (i == 10) {
-    sendError(messages.type.moveToNextSong, messages.status.failedToMoveToNextSong);
-    return;
-  }
-
-  console.log('pause took effect');
-
-  // We end this function actually positioned at the CURRENTLY playing song.
-  // But we know what the next one will be, because we've 'peeked' there.
-  // The startPlaying call will hit nextButton to start the next song.
-  sendCurrentSong(nextTitle, nextArtist);
+  // Start the interval timer for checking if the song is done.
+  songProgressInterval = setInterval(checkSongProgress, SONG_PROGRESS_POLL_RATE);
 }
 
-async function startPlaying() {
-  console.log('at startPlaying', currentlyPlaying(), currentlyPaused());
-  if (!currentlyPaused()) {
-    console.log('SHOULD NEVER HAPPEN');
-    sendError(messages.type.startPlaying, messages.status.failedToStartPlaying);
-    return false;
-  }
-
-  clickSelector(Selectors.nextButton, messages.type.startPlaying);
-  chrome.runtime.sendMessage(messages.newMessage(messages.type.startPlaying));
+async function stopAndSendMoveOk() {
+  stopPlaying();
+  // Without this small delay, a very short part of the previous song will be
+  // heard when the next song is starting, causing a noise-like blip at the
+  // beginning.
+  await sleep(200);
+  chrome.runtime.sendMessage(messages.newMessage(messages.type.moveToNextSong));
 }
 
 chrome.runtime.onMessage.addListener(function(message) {
@@ -245,21 +194,13 @@ chrome.runtime.onMessage.addListener(function(message) {
   const messageType = messages.getType(message);
 
   if (messageType == messages.type.moveToNextSong) {
-    if (songProgressInterval !== null) {
-      clearInterval(songProgressInterval);
-      songProgressInterval = null;
-    }
-
-    clickNextAndSendTitle();
+    // We'll just stop the current song (if any) and return.
+    // The following startPlaying message will actually click next to start
+    // playing the next song, plus send the current item back.
+    stopAndSendMoveOk();
   } else if (messageType == messages.type.startPlaying) {
-    // This assumes moveToNextSong was called beforehand.
-    // It makes sense, because you can't know the title that's about to play
-    // unless you previously called moveToNextSong.
-    if (startPlaying()) {
-      songProgressInterval = setInterval(checkSongProgress, SONG_PROGRESS_POLL_RATE);
-    }
+    clickNextAndSendCurrentSong();
   } else if (messageType == messages.type.detachRoom) {
-    console.log('got detach room message');
     stopPlaying();
   }
 });
