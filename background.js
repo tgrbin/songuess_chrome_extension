@@ -170,9 +170,6 @@ chrome.runtime.onInstalled.addListener(function() {
     chrome.declarativeContent.onPageChanged.addRules([{
       conditions: [
         new chrome.declarativeContent.PageStateMatcher({
-          pageUrl: { urlPrefix: 'https://play.google.com/music' }
-        }),
-        new chrome.declarativeContent.PageStateMatcher({
           pageUrl: { urlPrefix: 'https://open.spotify.com/playlist' }
         }),
         new chrome.declarativeContent.PageStateMatcher({
