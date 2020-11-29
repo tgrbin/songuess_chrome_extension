@@ -3,14 +3,8 @@
  */
 
 const Selectors = {
-  playButton:
-    ".Root__top-container button[data-testid='control-button-play']",
-  pauseButton:
-    ".Root__top-container button[data-testid='control-button-pause']",
-  prevButton: 
-    ".Root__top-container button[data-testid='control-button-skip-back']",
-  nextButton: 
-    ".Root__top-container button[data-testid='control-button-skip-forward']",
+  pauseButton: "div.Root__now-playing-bar button[title='Pause']",
+  nextButton: "div.Root__now-playing-bar button.spoticon-skip-forward-16",
   currentTitle: ".Root__now-playing-bar a[data-testid='nowplaying-track-link']",
   currentArtist: ".Root__now-playing-bar a[href^='/artist/']",
   sliderBar: ".Root__top-container .playback-bar .progress-bar__bg"
@@ -22,36 +16,6 @@ const SONG_PROGRESS_POLL_RATE = 400;
 let songProgressInterval = null;
 
 console.log('hi from content script: ', document.URL);
-
-function currentlyLoading() {
-  const loadingRegex = /\bcontrol-button--loading\b/;
-  const playButton = document.querySelector(Selectors.playButton);
-  const pauseButton = document.querySelector(Selectors.pauseButton);
-  if (playButton) {
-    return loadingRegex.test(playButton.className);
-  } else if (pauseButton) {
-    return loadingRegex.test(pauseButton.className);
-  }
-  // We couldn't find either of the two buttons, so assume some kind of
-  // loading state.
-  return true;
-}
-
-// Returns true if pauseButton is there and we're not in the loading state.
-function currentlyPlaying() {
-  if (currentlyLoading()) {
-    return false;
-  }
-  return document.querySelector(Selectors.pauseButton)? true: false;
-}
-
-// Returns true if playButton is there and we're not in the loading state.
-function currentlyPaused() {
-  if (currentlyLoading()) {
-    return false;
-  }
-  return document.querySelector(Selectors.playButton)? true: false;
-}
 
 function getCurrentTitle() {
   const el = document.querySelector(Selectors.currentTitle);
@@ -87,13 +51,13 @@ function getCurrentSongProgress() {
 }
 
 function stopPlaying() {
+  console.log('stop playing called');
   if (songProgressInterval !== null) {
+    console.log('progress interval wasnt null');
     clearInterval(songProgressInterval);
     songProgressInterval = null;
   }
-  if (currentlyPlaying()) {
-    clickSelector(Selectors.pauseButton);
-  }
+  clickSelector(Selectors.pauseButton);
 }
 
 function checkSongProgress() {
