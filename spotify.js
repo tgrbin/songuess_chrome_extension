@@ -4,10 +4,10 @@
 
 const Selectors = {
   pauseButton: "div.Root__now-playing-bar button[title='Pause']",
-  nextButton: "div.Root__now-playing-bar button.spoticon-skip-forward-16",
-  currentTitle: ".Root__now-playing-bar a[data-testid='nowplaying-track-link']",
-  currentArtist: ".Root__now-playing-bar a[href^='/artist/']",
-  sliderBar: ".Root__top-container .playback-bar .progress-bar__bg"
+  nextButton: "div.Root__now-playing-bar div.player-controls__buttons button:nth-of-type(4)",
+  currentTitle: "div.Root__now-playing-bar a[data-testid='nowplaying-track-link']",
+  currentArtist: "div.Root__now-playing-bar a[href^='/artist/']",
+  sliderBar: "div.Root__top-container div.playback-bar div.progress-bar__bg"
 };
 
 // Poll rate for the song progress slider, used to detect that the song ended.
